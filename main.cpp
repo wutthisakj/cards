@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <random>
 #include "apvector.h"
 #include "apstring.h"
 
@@ -108,6 +109,8 @@ struct Deck {
     Deck ();
     void print () const;
     int find (const Card& card) const;
+    void swapCards (int card1, int card2);
+    bool shuffle ();
 };
 
 Deck::Deck (int size) {
@@ -142,12 +145,71 @@ int Deck::find (const Card& card) const {
     return -1;
 }
 
+int myRandom (int offset, int range) {
+    srand((unsigned) time(NULL));
+    if (range > 0) {
+        return (offset + arc4random() % ((range + 1) - offset));
+    } else return -1;
+}
+
+int newRandom (int min, int max) {
+    //include <random>
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> distr(min, max);
+
+    return distr(gen);
+}
+
+int findBisect (const Card& card, const apvector<Card>& deck, int low, int high) {
+
+    cout << low << ", " << high << endl;
+
+    if (high < low) return -1;
+
+    int mid = (high + low) / 2;
+
+    // if we found the card, return its index
+    if (equals(deck[mid], card)) return mid;
+
+    // otherwise, compare the card to the middle card
+    if (deck[mid].isGreater (card)) {
+        // search the first half of the deck
+        return findBisect(card, deck, low, mid-1);
+    } else {
+        //search the second half of the deck
+        return findBisect(card, deck, mid+1, high);
+    }
+}
+void Deck::swapCards (int card1, int card2) {
+    Card temp = Card();
+    temp.suit = cards[card2].suit;
+    temp.rank = cards[card2].rank;
+    cards[card2].suit = cards[card1].suit;
+    cards[card2].rank = cards[card1].rank;
+    cards[card1].suit = temp.suit;
+    cards[card1].rank = temp.rank;
+}
+
+bool Deck::shuffle () {
+    int deckSize = cards.length();
+    cout << "** deck size : " << deckSize << endl;
+    if (deckSize==0) return false;
+    for (int i = 0; i < deckSize; i++) {
+        // choose a random number between i and cards.length()
+        //int pickAcard = myRandom(i, deckSize);
+        // swap the ith card and the randomly-chosen card
+        swapCards (i, newRandom(i, deckSize-1));
+    }
+    return true;
+}
 
 int main()
 {
     //Card TheJoker = Card ();
     //Card TheJoker(void);
-    Card JackOfDiamons (DIAMONDS, JACK);
+    //Card JackOfDiamons (DIAMONDS, JACK);
+    //Card FifteenOfDiamons (JOKER, NORANK);
     //apvector<Card> deck = buildDeck ();
     //printDeck (deck);
     //TheJoker.print();
@@ -155,15 +217,22 @@ int main()
     //cout << "I found the card at index = " << index <<  endl;
 
     Deck deck = Deck ();
-    //for (int i = 0; i<52; i++) {
-    //    deck.cards[i].print();
-    //}
-    deck.print();
-    int index = deck.find(JackOfDiamons);
-    if (index != -1)
-        cout << "Found the card at index no.:" << index << endl;
-    else
-        cout << "not found the card!" << endl;
 
+    deck.print();
+    if (deck.shuffle()) {
+        cout << "<< Shuffled >>" << endl;
+        deck.print();
+    } else cout << "it's an empty deck.";
+
+    //int index = deck.find(JackOfDiamons);
+    //if (index != -1)
+    //    cout << "Found the card at index no.:" << index << endl;
+    //else
+    //    cout << "not found the card!" << endl;
+
+    //cout << "my random number : " << myRandom (25, 52) << endl;
+    //cout << "new random number : " << newRandom (25, 52) << endl;
+    //cout << findBisect (JackOfDiamons, deck.cards, 0, 51) << endl;
+    //cout << "15 of Diamonds" << findBisect (FifteenOfDiamons, deck.cards, 0, 51) << endl;
     return 0;
 }

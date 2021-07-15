@@ -110,7 +110,8 @@ struct Deck {
     void print () const;
     int find (const Card& card) const;
     void swapCards (int card1, int card2);
-    bool shuffle ();
+    bool shuffleDeck ();
+    bool sortDeck ();
 };
 
 Deck::Deck (int size) {
@@ -153,7 +154,7 @@ int myRandom (int offset, int range) {
 }
 
 int newRandom (int min, int max) {
-    //include <random>
+    //need to include <random>
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> distr(min, max);
@@ -191,10 +192,9 @@ void Deck::swapCards (int card1, int card2) {
     cards[card1].rank = temp.rank;
 }
 
-bool Deck::shuffle () {
+bool Deck::shuffleDeck () {
     int deckSize = cards.length();
-    cout << "** deck size : " << deckSize << endl;
-    if (deckSize==0) return false;
+
     for (int i = 0; i < deckSize; i++) {
         // choose a random number between i and cards.length()
         //int pickAcard = myRandom(i, deckSize);
@@ -202,6 +202,27 @@ bool Deck::shuffle () {
         swapCards (i, newRandom(i, deckSize-1));
     }
     return true;
+}
+
+int findLowestCard (Deck& deck, int index) {
+    int deckSize = deck.cards.length();
+    int lowest = index;
+    for (int i = index; i < deckSize; i++) {
+        if (not deck.cards[i].isGreater(deck.cards[lowest]))
+            lowest = i;
+    }
+    return lowest;
+}
+
+bool Deck::sortDeck() {
+    int deckSize = cards.length();
+    for (int i = 0; i < deckSize; i++){
+        //find the lowest card at or to the right of i
+        int lowestIndex = findLowestCard (*this, i);
+        //swap the ith card and the lowest card
+        swapCards (i, lowestIndex);
+    }
+    return false;
 }
 
 int main()
@@ -216,14 +237,21 @@ int main()
     //int index = find (JackOfDiamons, deck);
     //cout << "I found the card at index = " << index <<  endl;
 
+    // create a deck (52 cards)
     Deck deck = Deck ();
 
-    deck.print();
-    if (deck.shuffle()) {
-        cout << "<< Shuffled >>" << endl;
+    //deck.print();
+    if (deck.shuffleDeck()) {
         deck.print();
+        //cout << "<< Shuffled and you've got ... >>" << endl;
+        //for (int i=0; i<2; i++) deck.cards[newRandom(0, 51)].print();
+        //cout << "The lowest card is located at : " << findLowestCard(deck, 0) << endl;
+        //deck.cards[findLowestCard(deck, 0)].print();
     } else cout << "it's an empty deck.";
 
+    deck.sortDeck();
+    cout << "Sorted!" << endl;
+    deck.print();
     //int index = deck.find(JackOfDiamons);
     //if (index != -1)
     //    cout << "Found the card at index no.:" << index << endl;
@@ -235,4 +263,4 @@ int main()
     //cout << findBisect (JackOfDiamons, deck.cards, 0, 51) << endl;
     //cout << "15 of Diamonds" << findBisect (FifteenOfDiamons, deck.cards, 0, 51) << endl;
     return 0;
-}
+}  
